@@ -11,3 +11,6 @@ coverage/
 src/generated/
 
 *.tsbuildinfo
+
+# Left out of the repo to keep it small; npm install recreates it
+package-lock.json
