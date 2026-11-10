@@ -4,30 +4,38 @@ A NestJS and Prisma backend for a library's book catalog, using a PostgreSQL dat
 
 ## Setup
 
-This project uses **Prisma 7**. Install it explicitly, because `npm install prisma` with no version now installs a Prisma 8 pre-release, which has no `migrate dev` or `generate` commands.
+This project uses **Prisma 7** with the `@prisma/adapter-pg` driver adapter. The versions are pinned in `api/package.json`.
 
 1. Go into the API folder and install the packages:
    ```
    cd api
    npm install
-   npm install --save-dev prisma@7 tsx dotenv
-   npm install @prisma/client@7 @prisma/adapter-pg @nestjs/config
    ```
-2. Add `ConfigModule.forRoot({ isGlobal: true })` to the `imports` of `AppModule`, and import `PrismaModule` there too.
-3. Copy `.env.example` to `.env` and replace the placeholder with your PostgreSQL connection string. Never commit `.env`.
-4. Create the tables and generate the client:
+2. Copy `.env.example` to `.env` and replace the placeholder with your PostgreSQL connection string. Never commit `.env`.
+3. Create the tables and generate the client:
    ```
    npx prisma migrate dev --name init
    npx prisma generate
    ```
-5. Add the sample data (5 genres and 15 books):
+4. Add the sample data (5 genres, 15 books and 2 users):
    ```
    npx prisma db seed
    ```
-6. Start the API:
+5. Start the API:
    ```
    npm run start:dev
    ```
+
+## Project layout
+
+| File | Purpose |
+| --- | --- |
+| `api/prisma/schema.prisma` | The `Role` enum and the `User`, `Genre`, `Book` and `Review` models |
+| `api/prisma/seed.ts` | Inserts the sample genres, books and users |
+| `api/prisma.config.ts` | Prisma 7 config: schema path, migrations folder, seed command, database URL |
+| `api/src/prisma/prisma.service.ts` | `PrismaService`, which extends `PrismaClient` and connects in `onModuleInit()` |
+| `api/src/prisma/prisma.module.ts` | Global module that makes `PrismaService` injectable everywhere |
+| `api/.env.example` | The `DATABASE_URL` placeholder |
 
 The generated client is written to `api/src/generated`, which is not committed (see `api/.gitignore`). Run `npx prisma generate` again after cloning the repository.
 
@@ -47,6 +55,7 @@ A `Book` stores a `genreId` foreign key with a `@relation` to the `Genre` model,
 - **`Role` enum (PATRON, LIBRARIAN):** only these two values are allowed, so a typo like "LIBARIAN" is rejected by the database. New users default to `PATRON`.
 - **Unique fields:** user email, genre name, and the pair (title, author) are unique, which also lets the seed script be run more than once safely.
 - **`Review` model (stretch task):** links a user to a book with a rating and comment. Each user can review a book once, and reviews are deleted if their book or user is deleted.
+- **Deleting a genre is restricted:** a genre that still has books cannot be deleted, so no book is ever left without a genre.
 
 ### Prisma vs a document database
 

@@ -1,0 +1,75 @@
+// Data layer for the library's book catalog.
+// The connection URL lives in prisma.config.ts (Prisma 7), read from DATABASE_URL.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Only these two roles exist, so the database rejects anything else
+enum Role {
+  PATRON
+  LIBRARIAN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      Role     @default(PATRON)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews Review[]
+}
+
+model Genre {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  books Book[]
+}
+
+model Book {
+  id            Int      @id @default(autoincrement())
+  title         String
+  author        String
+  publishedYear Int
+  copies        Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // A book references its genre by foreign key instead of embedding it.
+  // Restrict: a genre that still has books cannot be deleted.
+  genreId Int
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Restrict)
+
+  reviews Review[]
+
+  @@unique([title, author])
+  @@index([genreId])
+}
+
+// Stretch task: a user's review of a book
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int // 1 to 5, checked in the application
+  comment   String?
+  createdAt DateTime @default(now())
+
+  bookId Int
+  book   Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One review per user per book
+  @@unique([bookId, userId])
+  @@index([userId])
+}
