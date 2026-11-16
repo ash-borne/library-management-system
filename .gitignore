@@ -1,0 +1,2 @@
+# Real credentials stay local; only .env.example is committed
+.env
