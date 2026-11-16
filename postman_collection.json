@@ -1,0 +1,284 @@
+{
+ "info": {
+  "name": "Library Management System API",
+  "description": "Run \"Login (librarian)\" first: it saves the JWT into {{token}}, which every request sends as a Bearer token. Book and genre writes need a LIBRARIAN token (a PATRON gets 403). Sample accounts come from \"npx prisma db seed\".",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "auth": {
+  "type": "bearer",
+  "bearer": [
+   {
+    "key": "token",
+    "value": "{{token}}",
+    "type": "string"
+   }
+  ]
+ },
+ "variable": [
+  {
+   "key": "baseUrl",
+   "value": "http://localhost:3000"
+  },
+  {
+   "key": "token",
+   "value": ""
+  },
+  {
+   "key": "seedPassword",
+   "value": "ChangeMe123!"
+  },
+  {
+   "key": "genreId",
+   "value": "1"
+  },
+  {
+   "key": "bookId",
+   "value": "1"
+  }
+ ],
+ "item": [
+  {
+   "name": "Auth",
+   "item": [
+    {
+     "name": "Register (creates a PATRON)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "exec": [
+         "const body = pm.response.json();",
+         "if (body.access_token) pm.collectionVariables.set('token', body.access_token);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"email\":\"reader@example.com\",\"name\":\"New Reader\",\"password\":\"ReaderPass123!\"}"
+      },
+      "url": "{{baseUrl}}/auth/register"
+     }
+    },
+    {
+     "name": "Login (librarian)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "exec": [
+         "const body = pm.response.json();",
+         "if (body.access_token) pm.collectionVariables.set('token', body.access_token);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"email\":\"librarian@example.com\",\"password\":\"{{seedPassword}}\"}"
+      },
+      "url": "{{baseUrl}}/auth/login"
+     }
+    },
+    {
+     "name": "Login (patron)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "exec": [
+         "const body = pm.response.json();",
+         "if (body.access_token) pm.collectionVariables.set('token', body.access_token);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"email\":\"patron@example.com\",\"password\":\"{{seedPassword}}\"}"
+      },
+      "url": "{{baseUrl}}/auth/login"
+     }
+    }
+   ]
+  },
+  {
+   "name": "Users",
+   "item": [
+    {
+     "name": "Get my profile",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/users/profile"
+     }
+    }
+   ]
+  },
+  {
+   "name": "Genres",
+   "item": [
+    {
+     "name": "Create genre (librarian)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "exec": [
+         "const body = pm.response.json();",
+         "if (body.id) pm.collectionVariables.set('genreId', body.id);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"name\":\"Poetry\"}"
+      },
+      "url": "{{baseUrl}}/genres"
+     }
+    },
+    {
+     "name": "List genres",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/genres"
+     }
+    },
+    {
+     "name": "Get one genre",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/genres/{{genreId}}"
+     }
+    },
+    {
+     "name": "Update genre (librarian)",
+     "request": {
+      "method": "PATCH",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"name\":\"Poetry and Verse\"}"
+      },
+      "url": "{{baseUrl}}/genres/{{genreId}}"
+     }
+    },
+    {
+     "name": "Delete genre (librarian)",
+     "request": {
+      "method": "DELETE",
+      "url": "{{baseUrl}}/genres/{{genreId}}"
+     }
+    }
+   ]
+  },
+  {
+   "name": "Books",
+   "item": [
+    {
+     "name": "Create book (librarian)",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "exec": [
+         "const body = pm.response.json();",
+         "if (body.id) pm.collectionVariables.set('bookId', body.id);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"title\":\"Pride and Prejudice\",\"author\":\"Jane Austen\",\"isbn\":\"9780141439518\",\"totalCopies\":4,\"genreId\":1}"
+      },
+      "url": "{{baseUrl}}/books"
+     }
+    },
+    {
+     "name": "List books (page 1, 10 per page)",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/books"
+     }
+    },
+    {
+     "name": "List books: filter, search and paginate",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/books?genreId=1&search=achebe&page=1&limit=5"
+     }
+    },
+    {
+     "name": "Get one book",
+     "request": {
+      "method": "GET",
+      "url": "{{baseUrl}}/books/{{bookId}}"
+     }
+    },
+    {
+     "name": "Update book (librarian)",
+     "request": {
+      "method": "PATCH",
+      "body": {
+       "mode": "raw",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       },
+       "raw": "{\"totalCopies\":6}"
+      },
+      "url": "{{baseUrl}}/books/{{bookId}}"
+     }
+    },
+    {
+     "name": "Delete book (librarian)",
+     "request": {
+      "method": "DELETE",
+      "url": "{{baseUrl}}/books/{{bookId}}"
+     }
+    }
+   ]
+  }
+ ]
+}

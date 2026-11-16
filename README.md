@@ -1,6 +1,69 @@
 # Library Management System
 
-A NestJS and Prisma backend for a library's book catalog, using a PostgreSQL database. This part of the project is the data layer: the schema, the migration and the seed data.
+A NestJS and Prisma backend for a library's book catalog, using a PostgreSQL database. It has the data layer (schema, migrations, seed) and the API: Genre and Book CRUD, JWT auth and role-based access.
+
+## API: Books, Genres, Auth
+
+All code is in `api/src/`. Excerpts from the required files:
+
+**`genres/genres.controller.ts`, `genres.service.ts`, `genres.module.ts`**: full CRUD (`create`, `findAll`, `findOne`, `update`, `remove`) on `/genres`.
+
+**`books/dto/create-book.dto.ts`**: class-validator on every field.
+```ts
+@IsString() @IsNotEmpty() title: string;
+@IsString() @IsNotEmpty() author: string;
+@IsISBN() isbn: string;
+@IsInt() @Min(0) totalCopies: number;
+@IsInt() @IsPositive() genreId: number;
+```
+
+**`books/books.controller.ts`**: `GET /books` reads the query; POST/PATCH/DELETE are guarded.
+```ts
+@Get()
+findAll(@Query('genreId') genreId, @Query('search') search,
+        @Query('page') page, @Query('limit') limit) { ... }
+
+@Post()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.LIBRARIAN)
+create(@Body() dto: CreateBookDto) { ... }
+```
+
+**`books/books.service.ts`**: `findAll()` builds the `where` clause and paginates.
+```ts
+const where: Prisma.BookWhereInput = {};
+if (genreId !== undefined) where.genreId = genreId;
+if (term) where.OR = [
+  { title: { contains: term, mode: 'insensitive' } },
+  { author: { contains: term, mode: 'insensitive' } },
+];
+this.prisma.book.findMany({ where, skip, take });
+```
+
+**`auth/auth.controller.ts`, `auth.service.ts`, `auth.module.ts`**: `POST /auth/register` and `POST /auth/login` return a JWT.
+```ts
+const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
+```
+
+**`auth/jwt.strategy.ts`, `jwt-auth.guard.ts`**
+```ts
+secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+```
+
+**`auth/roles.decorator.ts`, `roles.guard.ts`**
+```ts
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+return requiredRoles.includes(req.user.role);
+```
+
+**`main.ts`**
+```ts
+app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+app.enableCors();
+```
+
+**`docs/postman_collection.json`**: 15 requests, one per endpoint. Stretch: `GET /users/profile` with `@Req()`, and login rate-limited with `@nestjs/throttler`.
 
 ## Setup
 
